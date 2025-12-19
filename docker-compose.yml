@@ -1,0 +1,9 @@
+﻿services:
+  security-service:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./cron_logs:/app/cron_logs
+    restart: always
