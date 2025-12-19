@@ -66,3 +66,22 @@ async def verify_2fa(request: VerifyRequest):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+class VerifyRequest(BaseModel):
+    code: str
+
+@app.post("/verify-2fa")
+async def verify_2fa(payload: VerifyRequest):
+    if not os.path.exists(SEED_FILE):
+        raise HTTPException(status_code=500, detail="Seed unavailable")
+    
+    with open(SEED_FILE, "r") as f:
+        seed = f.read().strip()
+    
+    totp = pyotp.TOTP(base64.b32encode(seed.encode()).decode())
+    # valid_window=1 allows for +/- 30 seconds as per requirements
+    is_valid = totp.verify(payload.code, valid_window=1)
+    
+    if is_valid:
+        return {"status": "verified"}
+    else:
+        raise HTTPException(status_code=400, detail="Invalid code")
