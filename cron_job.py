@@ -1,4 +1,5 @@
-﻿import pyotp
+﻿import hashlib
+import pyotp
 import base64
 import os
 import datetime
@@ -15,7 +16,7 @@ def run_job():
         seed = f.read().strip()
     
     b32_seed = base64.b32encode(seed.encode()).decode().replace('=', '')
-    totp = pyotp.TOTP(b32_seed, interval=30, digits=6, digest=hashes.SHA1())
+    totp = pyotp.TOTP(base64.b32encode(seed.encode()).decode(), digest=hashlib.sha1)
     code = totp.now()
     
     timestamp = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d %H:%M:%S')

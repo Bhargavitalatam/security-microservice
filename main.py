@@ -63,6 +63,7 @@ async def verify_2fa(request: VerifyRequest):
     else:
         return {"status": "invalid"}
 
+import hashlib
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
