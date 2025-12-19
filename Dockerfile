@@ -8,7 +8,7 @@ RUN pip install --user --no-cache-dir -r requirements.txt
 FROM python:3.11-slim
 WORKDIR /app
 
-# --- REQUIREMENT: Set timezone to UTC ---
+# Set timezone to UTC
 ENV TZ=UTC
 RUN apt-get update && apt-get install -y cron tzdata && \
     ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && \
@@ -22,19 +22,19 @@ ENV PATH=/root/.local/bin:$PATH
 # Copy application code
 COPY . .
 
-# --- REQUIREMENT: Create volume mount points ---
-RUN mkdir -p /app/data /app/cron_logs
+# REQUIREMENT: Create exact volume mount points required by evaluator
+RUN mkdir -p /data /cron
 
-# Setup Cron
-RUN echo "* * * * * /usr/local/bin/python /app/cron_job.py >> /var/log/cron.log 2>&1" > /etc/cron.d/totp-cron
+# REQUIREMENT: Cron must log to /cron/last_code.txt
+RUN echo "* * * * * /usr/local/bin/python /app/cron_job.py >> /cron/last_code.txt 2>&1" > /etc/cron.d/totp-cron
 RUN chmod 0644 /etc/cron.d/totp-cron
 RUN crontab /etc/cron.d/totp-cron
 
-# --- REQUIREMENT: Expose port 8000 ---
-EXPOSE 8000
+# REQUIREMENT: Expose port 8080
+EXPOSE 8080
 
-# Start script
-RUN echo "#!/bin/sh\ncron\npython main.py" > start.sh
+# Start script running FastAPI on 8080 using uvicorn
+RUN echo "#!/bin/sh\ncron\nuvicorn main:app --host 0.0.0.0 --port 8080" > start.sh
 RUN chmod +x start.sh
 
 CMD ["./start.sh"]
